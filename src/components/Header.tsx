@@ -69,13 +69,15 @@ export function Header() {
             </Button>
             {isAuthenticated && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate("/orders")}
                 className="relative group hidden sm:inline-flex"
               >
-                <Package2 className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                <span className="absolute inset-0 rounded-full bg-purple-500/20 scale-0 group-hover:scale-100 transition-transform duration-300 -z-10"></span>
+                <Link to={"/orders"}>
+                  <Package2 className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
+                  <span className="absolute inset-0 rounded-full bg-purple-500/20 scale-0 group-hover:scale-100 transition-transform duration-300 -z-10"></span>
+                </Link>
               </Button>
             )}
             {isAuthenticated ? (
