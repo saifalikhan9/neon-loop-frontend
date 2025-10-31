@@ -8,24 +8,24 @@ import Cart from "./pages/Cart";
 import { CheckoutPage } from "./pages/Checkout";
 import AboutPage from "./pages/About";
 import Orders from "./pages/Orders";
+import ProtectedRoutes from "./components/ProtectedRoutes";
 
 const App = () => {
   return (
-    <>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="signUp" element={<SignupPage />} />
-          <Route path="customize" element={<CustomizePage />} />
-          <Route path="about" element={<AboutPage />} />
-          <Route path="cart" element={<Cart />} />
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="signUp" element={<SignupPage />} />
+        <Route path="customize" element={<CustomizePage />} />
+        <Route path="about" element={<AboutPage />} />
+        <Route path="cart" element={<Cart />} />
+        <Route element={<ProtectedRoutes />}>
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="orders" element={<Orders />} />
-
         </Route>
-      </Routes>
-    </>
+      </Route>
+    </Routes>
   );
 };
 

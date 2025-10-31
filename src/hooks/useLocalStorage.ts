@@ -1,7 +1,10 @@
 // useLocalStorage.ts
 import { useState } from 'react';
 
-function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
+function useLocalStorage<T>(
+  key: string, 
+  initialValue: T
+): [T, (value: T | ((val: T) => T)) => void, () => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
       return initialValue;
@@ -27,7 +30,18 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val
     }
   };
 
-  return [storedValue, setValue];
+  const clearValue = () => {
+    try {
+      setStoredValue(initialValue);
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return [storedValue, setValue, clearValue];
 }
 
 export default useLocalStorage;

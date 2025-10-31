@@ -14,13 +14,12 @@ export function CustomizePage() {
   const { items, addItem } = useCart();
 
   function handleCart() {
-    
     const isDuplicate = items.some(
       (item) =>
         item.meta?.text === text &&
         item.meta?.color === color.name &&
-        item.meta?.size === size.name&& 
-        item.meta?.font===font
+        item.meta?.size === size.name &&
+        item.meta?.font === font
     );
 
     if (isDuplicate) {
@@ -71,25 +70,27 @@ export function CustomizePage() {
   ].join(", ");
 
   return (
-    <div className="mx-auto max-w-7xl mt-20 gap-4 grid grid-cols-1 md:grid-cols-2 p-5 ">
-      {/* Preview */}
+    <div className="w-full">
+      <div className="mx-auto max-w-7xl mt-14 gap-4 grid grid-cols-1 md:grid-cols-2 p-5 ">
+        {/* Preview */}
 
-      <NeonPreview
-        color={color}
-        text={text}
-        font={font}
-        shadows={shadows}
-        size={size.size}
-      />
-      {/* Controls */}
-      <Controls
-        price={price}
-        setColor={setColor}
-        setFont={setFont}
-        setSize={setSize}
-        setText={setText}
-        handleCart={handleCart}
-      />
+        <NeonPreview
+          color={color}
+          text={text}
+          font={font}
+          shadows={shadows}
+          size={size.size}
+        />
+        {/* Controls */}
+        <Controls
+          price={price}
+          setColor={setColor}
+          setFont={setFont}
+          setSize={setSize}
+          setText={setText}
+          handleCart={handleCart}
+        />
+      </div>
     </div>
   );
 }

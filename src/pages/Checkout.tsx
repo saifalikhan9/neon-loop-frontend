@@ -4,62 +4,115 @@ import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
 import { motion } from "motion/react";
 import { Lock, Truck, CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router";
+import {  useNavigate } from "react-router";
 import { useCart } from "@/hooks/useCart";
 import api from "@/lib/axios";
-import useMutation from "@/hooks/useMutation";
 import { useAuth } from "@/hooks/useAuth";
 import useLocalStorage from "@/hooks/useLocalStorage";
+import { useRazorpay, type RazorpayResponse } from "@/lib/Rzorpay";
+import { additionalCargesfn } from "@/utils/additionalCharges";
+import { BounceLoader } from "@/components/ui/laoder";
+interface ShippingData {
+  fullName: string;
+  email: string;
+  address: string;
+  state: string;
+  city: string;
+  zip: string;
+  contact: string;
+}
 
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { items, total, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
-  const [shippingData, setShippingData] = useLocalStorage("shippingData", {
-    fullName: "",
-    email: "",
-    address: "",
-    state:"",
-    city: "",
-    zip: "",
-    contact: "",
-  });
-  const shippingCost = 100;
-  const shipppingCarge = total * 0.01;
-  const finalTotal = total + shippingCost + shipppingCarge;
+  const { isLoading, isAuthenticated } = useAuth();
+  const isRazorpayLoaded = useRazorpay();
+  const [shippingAddress, setshippingAddress, clearValue] =
+    useLocalStorage<ShippingData>("shippingAddress", {
+      fullName: "",
+      email: "",
+      address: "",
+      state: "",
+      city: "",
+      zip: "",
+      contact: "",
+    });
 
-  const createOrder = (orderData) => api.post("/orders/create", orderData);
 
-  // 3. Use the hook. It gives you back a 'mutate' function and loading/error states
-  const { mutate: placeOrder, isLoading, error } = useMutation(createOrder);
+  if (isLoading) {
+    return <BounceLoader />;
+  }
+
+  const additionalCarges = additionalCargesfn(total);
+  
+  async function verifyPayment(response:RazorpayResponse) {
+    try {
+       await api.post("orders/verify-payment", {
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+      });
+
+      // console.log(res);
+      setTimeout(() => navigate("/orders"), 2000);
+    } catch (error) {
+      console.error("Verification error:", error);
+      alert("Payment verification failed!");
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!isAuthenticated) {
       alert("please login first");
     }
-    e.preventDefault();
+    if (!isRazorpayLoaded) {
+      alert("Payment gateway is loading. Please wait...");
+      return;
+    }
 
     try {
-      await placeOrder({
+      const res = await api.post("orders/create-order", {
         items,
-        shippingInfo: shippingData,
-        subtotal: finalTotal,
+        shippingAddress,
+        totalAmount: additionalCarges?.totalAmount,
       });
 
-      alert("Order placed successfully!");
+      const order = res.data;
+
+      const options = {
+        key: order?.razorpayKeyId,
+        amount: order?.razorpayOrder?.amount,
+        currency: order?.razorpayOrder?.currency,
+        name: "Your Neon Sign Store",
+        description: "Neon Sign Purchase",
+        order_id: order?.razorpayOrder?.id,
+        handler: async function (response:RazorpayResponse) {
+          // Step 3: Verify payment
+           await verifyPayment(response);
+          // console.log(res);
+        },
+        prefill: {
+          name: "John Doe",
+          email: "john@example.com",
+          contact: "9876543210",
+        },
+        theme: {
+          color: "#FF6B6B", // Your brand color
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
       clearCart();
-      setTimeout(() => navigate("/orders"), 2000);
+      clearValue();
     } catch (err) {
       // Handle the error, e.g., show a notification to the user
       console.log(err);
       alert(`Failed to place order`);
     }
   };
-
-  if (items.length === 0) {
-    navigate("/cart");
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 ">
@@ -97,16 +150,16 @@ export function CheckoutPage() {
                       id="fullName"
                       required
                       className="border-gray-200 focus:border-pink-300 transition-colors"
-                      value={shippingData.fullName}
+                      value={shippingAddress.fullName}
                       onChange={(e) => {
-                        setShippingData((prev) => ({
-                          ...prev,
+                        setshippingAddress({
+                          ...shippingAddress,
                           fullName: e.target.value,
-                        }));
+                        });
                       }}
                     />
                   </div>
-               
+
                   <div className="space-y-2 ">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -114,12 +167,12 @@ export function CheckoutPage() {
                       type="email"
                       required
                       className="border-gray-200 focus:border-pink-300 transition-colors"
-                      value={shippingData.email}
+                      value={shippingAddress.email}
                       onChange={(e) => {
-                        setShippingData((prev) => ({
-                          ...prev,
+                        setshippingAddress({
+                          ...shippingAddress,
                           email: e.target.value,
-                        }));
+                        });
                       }}
                     />
                   </div>
@@ -129,9 +182,9 @@ export function CheckoutPage() {
                       id="address"
                       required
                       className="border-gray-200 focus:border-pink-300 transition-colors"
-                      value={shippingData.address}
+                      value={shippingAddress.address}
                       onChange={(e) => {
-                        setShippingData((prev) => ({
+                        setshippingAddress((prev) => ({
                           ...prev,
                           address: e.target.value,
                         }));
@@ -144,12 +197,12 @@ export function CheckoutPage() {
                       id="city"
                       required
                       className="border-gray-200 focus:border-pink-300 transition-colors"
-                      value={shippingData.city}
+                      value={shippingAddress.city}
                       onChange={(e) => {
-                        setShippingData((prev) => ({
-                          ...prev,
+                        setshippingAddress({
+                          ...shippingAddress,
                           city: e.target.value,
-                        }));
+                        });
                       }}
                     />
                   </div>
@@ -159,12 +212,12 @@ export function CheckoutPage() {
                       id="state"
                       required
                       className="border-gray-200 focus:border-pink-300 transition-colors"
-                      value={shippingData.state}
+                      value={shippingAddress.state}
                       onChange={(e) => {
-                        setShippingData((prev) => ({
-                          ...prev,
+                        setshippingAddress({
+                          ...shippingAddress,
                           state: e.target.value,
-                        }));
+                        });
                       }}
                     />
                   </div>
@@ -174,12 +227,12 @@ export function CheckoutPage() {
                       id="postalCode"
                       required
                       className="border-gray-200 focus:border-pink-300 transition-colors"
-                      value={shippingData.zip}
+                      value={shippingAddress.zip}
                       onChange={(e) => {
-                        setShippingData((prev) => ({
-                          ...prev,
+                        setshippingAddress({
+                          ...shippingAddress,
                           zip: e.target.value,
-                        }));
+                        });
                       }}
                     />
                   </div>
@@ -191,12 +244,12 @@ export function CheckoutPage() {
                       type="tel"
                       required
                       className="border-gray-200 focus:border-pink-300 transition-colors"
-                      value={shippingData.contact}
+                      value={shippingAddress.contact}
                       onChange={(e) => {
-                        setShippingData((prev) => ({
-                          ...prev,
+                        setshippingAddress({
+                          ...shippingAddress,
                           contact: e.target.value,
-                        }));
+                        });
                       }}
                     />
                   </div>
@@ -238,13 +291,17 @@ export function CheckoutPage() {
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping Cost</span>
-                    <span>₹{shippingCost}</span>
+                    <span>₹{additionalCarges.shippingCharge}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Tax</span>
+                    <span>₹{additionalCarges.tax}</span>
                   </div>
 
                   <Separator className="my-4" />
                   <div className="flex justify-between text-xl">
                     <span>Total</span>
-                    <span>₹{finalTotal.toFixed(2)}</span>
+                    <span>₹{additionalCarges?.totalAmount.toFixed(2)}</span>
                   </div>
                 </div>
 

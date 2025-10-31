@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { colors, fonts, mdSizes } from "@/constants/CustomizeConstants";
 import type React from "react";
-import { useCart } from "@/hooks/useCart";
 
 export interface NeonControlsTypes {
   setColor: (color: (typeof colors)[number]) => void;

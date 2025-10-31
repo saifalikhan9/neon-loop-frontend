@@ -3,10 +3,12 @@ import { motion } from "motion/react";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useCart } from "@/hooks/useCart";
+import { additionalCargesfn } from "@/utils/additionalCharges";
 
 export default function CartPage() {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, total } = useCart();
+  const { tax, totalAmount, shippingCharge } = additionalCargesfn(total);
 
   if (items.length === 0) {
     return (
@@ -24,7 +26,7 @@ export default function CartPage() {
               Start adding some amazing neon signs to your cart!
             </p>
             <Button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/customize")}
               className="bg-black hover:bg-gray-800 text-white group relative overflow-hidden"
               size="lg"
             >
@@ -81,15 +83,9 @@ export default function CartPage() {
                     <h3 className="mb-2">{item.title}</h3>
                     {item.meta && (
                       <div className="text-sm text-gray-600 mb-3 space-y-1">
-                        {item.meta.text && (
-                          <div>Text: "{item.meta.text}"</div>
-                        )}
-                        {item.meta.color && (
-                          <div>Color: {item.meta.color}</div>
-                        )}
-                        {item.meta.size && (
-                          <div>Size: {item.meta.size}</div>
-                        )}
+                        {item.meta.text && <div>Text: "{item.meta.text}"</div>}
+                        {item.meta.color && <div>Color: {item.meta.color}</div>}
+                        {item.meta.size && <div>Size: {item.meta.size}</div>}
                       </div>
                     )}
 
@@ -148,21 +144,25 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
-                  <span className="text-green-600">Free</span>
+                  <span className="text-green-600">{shippingCharge}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Tax</span>
-                  <span>${(total * 0.1).toFixed(2)}</span>
+                  <span>${tax.toFixed(2)}</span>
                 </div>
                 <div className="h-px bg-gray-200 my-4"></div>
                 <div className="flex justify-between text-xl">
                   <span>Total</span>
-                  <span>${(total * 1.1).toFixed(2)}</span>
+                  <span>${totalAmount}</span>
                 </div>
               </div>
 
               <Button
-                onClick={() => navigate("/checkout")}
+                onClick={() =>
+                  navigate("/checkout", {
+                    state: { tax, totalAmount, shippingCharge },
+                  })
+                }
                 className="w-full bg-black hover:bg-gray-800 text-white mb-3 group relative overflow-hidden"
                 size="lg"
               >
@@ -174,7 +174,7 @@ export default function CartPage() {
               </Button>
 
               <Button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/customize")}
                 variant="outline"
                 className="w-full border-gray-200 hover:border-black transition-colors"
               >

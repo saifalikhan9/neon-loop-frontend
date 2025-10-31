@@ -53,9 +53,9 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <h1 className="relative bg-clip-text text-transparent bg-gradient-to-b from-pink-500 to-purple-500 text-6xl sm:text-7xl md:text-8xl after:absolute after:size-50 after:top-0 after:left-80   after:bg-gradient-to-r after:from-pink-500/20 after:to-purple-500/20 after:blur-2xl after:-z-10 after:animate-pulse ">
+          <span className="relative bg-clip-text text-transparent bg-gradient-to-b from-pink-500 to-purple-500 text-6xl sm:text-7xl md:text-8xl after:absolute after:size-50 after:top-0 after:left-80   after:bg-gradient-to-r after:from-pink-500/20 after:to-purple-500/20 after:blur-2xl after:-z-10 after:animate-pulse ">
             Light Up Your World
-          </h1>
+          </span>
         </motion.h1>
 
         <motion.p
