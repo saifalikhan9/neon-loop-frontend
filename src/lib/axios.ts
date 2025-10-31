@@ -14,17 +14,17 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: "http://localhost:3000/api/v1", // Using Vite proxy (remove http://localhost:3000)
-  timeout: 10000, // Increased timeout
+  baseURL: import.meta.env.VITE_BACKEND_URL,
+  timeout: 10000, 
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true, // Required for cookies
 });
 
-// Variable to track if we're currently refreshing token
+
 let isRefreshing = false;
-// Store pending requests that should be retried after token refresh
+
 let failedQueue: QueueItem[] = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
@@ -38,13 +38,12 @@ const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Request interceptor
+
 // NOTE: We don't get token from localStorage anymore
 // Token will be managed by UserProvider and set via api.defaults.headers
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Token is already set in api.defaults.headers.common by UserProvider
-    // No need to manually add it here
+   
     return config;
   },
   (error) => {
@@ -60,7 +59,6 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryConfig;
 
-    // If there's no config, reject
     if (!originalRequest) {
       return Promise.reject(error);
     }
